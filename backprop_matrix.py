@@ -1,6 +1,7 @@
 import operator 
 import math
 import numpy as np
+from copy import copy, deepcopy
 
 
 def squash(value,function):
@@ -24,9 +25,12 @@ class MLTools(object):
 	@staticmethod
 	def squaredError(expected,actual):
 		total = 0
+		#errorVector = []
 		for e,a in zip(expected,actual):
-			total += (.5) * ((e-a)**2)  #Σ (1/2 (expected−actual)^2)
-		return total
+			error = (.5) * ((e-a)**2)  #Σ (1/2 (expected−actual)^2)
+			total += error
+			#errorVector.append(error)
+		return total #,errorVector
 
 
 	#Dictionary containing refs to functions
@@ -92,17 +96,48 @@ def backpropagation(network,weights,error,expectedValues,squashFunction):
 	# dError_dOut = 0
 	# dOut_dNet = 0
 	# dNet_dW = 0
+	errorVector = [] #Vector containing the dError/dOut values 
+	outVector = [] #Vector containing the dOut/dNet values
+	originalWeights = deepcopy(weights) #deepcopy prevents the references from being copied rather than values
+
 	for i in range(len(network)-1,-1,-1): #layer
 		for j in range(len(network[i])): #current node
-			if i == len(network)-1:
+			if i == len(network)-1: #for the output layer
 				dError_dOut = -(expectedValues[j] - network[i][j])
 				dOut_dNet = MLTools.derivatives[squashFunction](network[i][j])
-				dNet_dW = network[i-1][j]
-				gradient = (dError_dOut*dOut_dNet*dNet_dW)
-				for k in range(len(network[i-1])): #prev layer
-					#i-1 = prev layer, k = which node in that layer, j = weight pointing to our current node
+				errorVector.append(dError_dOut)
+				outVector.append(dOut_dNet)
+				for k in range(len(network[i-1])):
+					dNet_dW = network[i-1][k]
+					gradient = (dError_dOut*dOut_dNet*dNet_dW)
+					#print(str(gradient))
+					# 	#i-1 = prev layer, k = which node in that layer, j = weight pointing to our current node
 					weights[i-1][k][j] = weights[i-1][k][j] - (MLTools.learningRate * gradient)
-					print(weights)
+					print(weights[i-1][k][j])
+
+
+				# dNet_dW = network[i-1][j]
+				# errorVector.append(dError_dOut)
+				# outVector.append(dOut_dNet)
+				# gradient = (dError_dOut*dOut_dNet*dNet_dW)
+				# print(str(gradient),"gradient o"+str(i))
+				# for k in range(len(network[i-1])): #prev layer
+				# 	#i-1 = prev layer, k = which node in that layer, j = weight pointing to our current node
+				# 	weights[i-1][k][j] = weights[i-1][k][j] - (MLTools.learningRate * gradient)
+				# 	#print(weights)
+			elif i == 0:
+				break
+			else:
+				for k in range(len(matrix[-1])): 
+					dE_dNet = errorVector[k] * outVector[k] 
+					dNetOut_dOutHidden = originalWeights[i][j][k]
+					print(dE_dNet*dNetOut_dOutHidden)
+
+					break
+
+			
+
+
 			#for k in range(len(network[j])-1,-1,-1): 
 
 
@@ -137,6 +172,7 @@ network = forwardPass(network,weights,biases,squashFunction)
 print(network)
 error = MLTools.squaredError(network[-1],[.01,.99]) 
 print(weights)
+
 backpropagation(network,weights,error,[.01,.99],squashFunction)
 
 
