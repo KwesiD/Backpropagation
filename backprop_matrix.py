@@ -93,11 +93,9 @@ def forwardPass(network,weights,biases,squashFunction):
 	return network
 
 def backpropagation(network,weights,error,expectedValues,squashFunction):
-	# dError_dOut = 0
-	# dOut_dNet = 0
-	# dNet_dW = 0
-	errorVector = [] #Vector containing the dError/dOut values 
-	outVector = [] #Vector containing the dOut/dNet values
+
+	#errorVector = [] #Vector containing the dError/dOut values 
+	#outVector = [] #Vector containing the dOut/dNet values
 	originalWeights = deepcopy(weights) #deepcopy prevents the references from being copied rather than values
 
 	for i in range(len(network)-1,-1,-1): #layer
@@ -105,26 +103,19 @@ def backpropagation(network,weights,error,expectedValues,squashFunction):
 			if i == len(network)-1: #for the output layer
 				dError_dOut = -(expectedValues[j] - network[i][j])
 				dOut_dNet = MLTools.derivatives[squashFunction](network[i][j])
-				errorVector.append(dError_dOut)
-				outVector.append(dOut_dNet)
+				#errorVector.append(dError_dOut)
+				#outVector.append(dOut_dNet)
 				for k in range(len(network[i-1])):
 					dNet_dW = network[i-1][k]
 					gradient = (dError_dOut*dOut_dNet*dNet_dW)
+					
 					#print(str(gradient))
+					
 					# 	#i-1 = prev layer, k = which node in that layer, j = weight pointing to our current node
 					weights[i-1][k][j] = originalWeights[i-1][k][j] - (MLTools.learningRate * gradient)
-					print(weights[i-1][k][j])
+					
+					#print(weights[i-1][k][j])
 
-
-				# dNet_dW = network[i-1][j]
-				# errorVector.append(dError_dOut)
-				# outVector.append(dOut_dNet)
-				# gradient = (dError_dOut*dOut_dNet*dNet_dW)
-				# print(str(gradient),"gradient o"+str(i))
-				# for k in range(len(network[i-1])): #prev layer
-				# 	#i-1 = prev layer, k = which node in that layer, j = weight pointing to our current node
-				# 	weights[i-1][k][j] = weights[i-1][k][j] - (MLTools.learningRate * gradient)
-				# 	#print(weights)
 			elif i == 0:
 				break
 			else:
@@ -141,19 +132,14 @@ def backpropagation(network,weights,error,expectedValues,squashFunction):
 					dNet_dW = network[i-1][k]
 					gradient = (dError_dOut * dOut_dNet * dNet_dW)
 					weights[i-1][k][j] = originalWeights[i-1][k][j] - (MLTools.learningRate * gradient)
-					print(weights[i-1][k][j])
+					
+					#print(weights[i-1][k][j])
+
+	return weights
 
 
-				# #dE_dNet = errorVector[k] * outVector[k] 
-				# dNetOut_dOutHidden = originalWeights[i][j][k]
-				# print(dE_dNet*dNetOut_dOutHidden)
 
 				
-
-			
-
-
-			#for k in range(len(network[j])-1,-1,-1): 
 
 
 				
@@ -162,6 +148,33 @@ def backpropagation(network,weights,error,expectedValues,squashFunction):
 
 
 
+
+
+# networkSizes = [2,2,2] #The vector containing the sizes of the layers  
+# network = createMatrix(networkSizes)
+# network[0] = [.05,.10] #initialize the input layer
+
+# weights = []
+# weights.append([[.15,.25],[.20,.30]])
+# weights.append([[.40,.50],[.45,.55]])
+# weights.append([[1],[1]])#no weights
+# #weights = np.matrix(weights)
+
+# biases = []
+# biases.append([0,0])
+# biases.append([.35,.35])
+# biases.append([.60,.60])
+# #biases = np.matrix(biases)
+
+# #print(network,"\n\n",weights,"\n\n",biases)
+
+# squashFunction = "sigmoid"  #a string with the name of the squash function
+# network = forwardPass(network,weights,biases,squashFunction)
+# print(network)
+# error = MLTools.squaredError(network[-1],[.01,.99]) 
+# print(weights)
+
+# backpropagation(network,weights,error,[.01,.99],squashFunction)
 
 
 networkSizes = [2,2,2] #The vector containing the sizes of the layers  
@@ -183,15 +196,16 @@ biases.append([.60,.60])
 #print(network,"\n\n",weights,"\n\n",biases)
 
 squashFunction = "sigmoid"  #a string with the name of the squash function
-network = forwardPass(network,weights,biases,squashFunction)
-print(network)
-error = MLTools.squaredError(network[-1],[.01,.99]) 
-print(weights)
+for i in range(20000):
+	network = forwardPass(network,weights,biases,squashFunction)
+	#print(network[-1],"\t"+str(i))
+	error = MLTools.squaredError(network[-1],[.01,.99]) 
+	#print(weights)
 
-backpropagation(network,weights,error,[.01,.99],squashFunction)
+	weights = backpropagation(network,weights,error,[.01,.99],squashFunction)
 
 
-
+print(network[-1]) #output
 
 
 
