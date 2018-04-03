@@ -112,7 +112,7 @@ def backpropagation(network,weights,error,expectedValues,squashFunction):
 					gradient = (dError_dOut*dOut_dNet*dNet_dW)
 					#print(str(gradient))
 					# 	#i-1 = prev layer, k = which node in that layer, j = weight pointing to our current node
-					weights[i-1][k][j] = weights[i-1][k][j] - (MLTools.learningRate * gradient)
+					weights[i-1][k][j] = originalWeights[i-1][k][j] - (MLTools.learningRate * gradient)
 					print(weights[i-1][k][j])
 
 
@@ -128,12 +128,27 @@ def backpropagation(network,weights,error,expectedValues,squashFunction):
 			elif i == 0:
 				break
 			else:
-				for k in range(len(matrix[-1])): 
-					dE_dNet = errorVector[k] * outVector[k] 
-					dNetOut_dOutHidden = originalWeights[i][j][k]
-					print(dE_dNet*dNetOut_dOutHidden)
+				dError_dOut = 0
+				for l in range(len(network[i+1])): #the layer ahead, analogous to j
+					#these derivatives are relative to the next layer
+					dE_dNet = -(expectedValues[l] - network[i+1][l])
+					dOut_dNet = MLTools.derivatives[squashFunction](network[i+1][l])
+					dEl_doutk = dE_dNet * dOut_dNet * originalWeights[i][j][l]     #the error of the next node/output of this node
+					dError_dOut += dEl_doutk
+				#these derivatives are for the current layer
+				dOut_dNet = MLTools.derivatives[squashFunction](network[i][j])
+				for k in range(len(network[i-1])): #the previous layer
+					dNet_dW = network[i-1][k]
+					gradient = (dError_dOut * dOut_dNet * dNet_dW)
+					weights[i-1][k][j] = originalWeights[i-1][k][j] - (MLTools.learningRate * gradient)
+					print(weights[i-1][k][j])
 
-					break
+
+				# #dE_dNet = errorVector[k] * outVector[k] 
+				# dNetOut_dOutHidden = originalWeights[i][j][k]
+				# print(dE_dNet*dNetOut_dOutHidden)
+
+				
 
 			
 
