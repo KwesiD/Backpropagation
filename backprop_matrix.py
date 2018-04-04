@@ -254,7 +254,7 @@ def createAdd(lower,upper,size):
 		inputs.append([lower+n1,upper-n2])
 		outputs.append((lower+n1)+(upper-n2))
 	return inputs,outputs
-	
+
 # networkSizes = [2,2,2] #The vector containing the sizes of the layers  
 # #network = createMatrix(networkSizes)
 # inputs = [.05,.10] #initialize the input layer
@@ -288,7 +288,7 @@ targets = [0,1,1,0]
 squashFunction = "sigmoid"
 learningRate = 1
 network = NeuralNetwork(networkSizes,squashFunction,learningRate)
-for i in range(40000): #num epochs
+for i in range(20000): #num epochs
 	for j in range(len(inputs)):
 		network.train(inputs[j],[targets[j]])
 for i in range(len(inputs)):
