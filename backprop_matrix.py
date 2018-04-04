@@ -7,19 +7,24 @@ import random
 
 class NeuralNetwork():
 
-	def __init__(self,sizes,weights,squashFunction,learningRate,biases=None):
+	def __init__(self,sizes,squashFunction,learningRate,weights=None,biases=None):
 		self.network = self.createMatrix(sizes)
 		self.squashFunction = squashFunction
-		if(self.compareSizes(self.network,weights) == False):
-			raise Error("Network and weight matrices are not of the same dimensions.")
-		if(self.compareSizes(self.network,biases) == False):
-			raise Error("Network and bias matrices are not of the same dimensions.")
-		self.weights = weights
+		if(weights == None):
+			self.weights = self.createMatrix(sizes)
+			self.randomizeWeights()
+		else:
+			self.weights = weights
+			if(self.compareSizes(self.network,weights) == False):
+				raise Error("Network matrix and first 2 dimensions of weight matrix are not of the same dimensions.")
+		#self.weights = weights
 		if(biases == None):
 			self.biases = self.createMatrix(sizes)
 			self.randomizeBiases()
 		else:
 			self.biases = biases
+			if(self.compareSizes(self.network,biases) == False):
+				raise Error("Network and bias matrices are not of the same dimensions.")
 
 		self.MLTools.learningRate = learningRate
 		# if(len(expectedValues) != len(weights[-1])):
@@ -34,15 +39,25 @@ class NeuralNetwork():
 	# 	else:
 	# 		return None
 
-	#Compre the sizes of 2 matrices
 
-	def randomizeBises(self):
+	def randomizeBiases(self):
 		for i in range(len(self.biases)):
 			if(i == 0):
 				continue
 			else:
-				for j in range(len(self.biases[i][j])):
+				for j in range(len(self.biases[i])):
 					self.biases[i][j] = random.random()
+
+	def randomizeWeights(self):
+		for i in range(len(self.weights)):
+			if(i == len(self.weights)-1):
+				for j in range(len(self.weights[i])):
+					self.weights[i][j] = [1]	
+			else:
+				for j in range(len(self.weights[i])):
+					self.weights[i][j] = [0] * len(self.weights[i+1])
+					for k in range(len(self.weights[i+1])):
+						self.weights[i][j][k] = random.random()
 
 
 	def compareSizes(self,m1,m2):
@@ -64,6 +79,8 @@ class NeuralNetwork():
 		else:
 			self.network[0] = inputVector
 
+
+
 	def flush(self):
 		for i in range(len(self.network)):
 			if(i == 0):
@@ -84,6 +101,15 @@ class NeuralNetwork():
 		def sigmoidDerivative(value):
 			return (value)*(1-value)
 
+		def relu(netInput):
+			return max(0, netInput)
+
+		def reluDerivative(value):
+			if(value > 0):
+				return 1
+			else:
+				return 0
+
 		@staticmethod
 		def squaredError(expected,actual):
 			total = 0
@@ -96,13 +122,13 @@ class NeuralNetwork():
 
 
 		#Dictionary containing refs to functions
-		squash = {"sigmoid":sigmoid}
+		squash = {"sigmoid":sigmoid,"relu":relu}
 
 		#Dictionary containing refs to functions derivatives
-		derivatives = {"sigmoid":sigmoidDerivative}
+		derivatives = {"sigmoid":sigmoidDerivative,"relu":reluDerivative}
 
-		#sample learning rate
-		learningRate = 0
+		#initial learning rate
+		learningRate = .5
 
 
 
@@ -123,8 +149,6 @@ class NeuralNetwork():
 			for i in range(len(newNetwork)):
 				newNetwork[i] = [0] * sizes[i]  
 
-				
-			
 		else:
 			 #creates an empty vector the size of all the
 			 #layers (including input and output)
@@ -140,12 +164,19 @@ class NeuralNetwork():
 		return newNetwork
 
 
+	def addMatrices(self,m1,m2):
+		for i in range(len(m1)):
+			for j in range(len(m1[i])):
+				m1[i][j] += m2[i][j]
+		return m1
+
+
 	def feedForward(self,inputs):
 
 		self.setInput(inputs) #sets the inputs
 		self.flush() #flush the previous data in the network feed
-
-		self.network = (np.matrix(self.network) + np.matrix(self.biases)).tolist()  #add biases to network
+		#self.network = (np.matrix(self.network) + np.matrix(self.biases)).tolist()  #add biases to network
+		self.network = self.addMatrices(self.network,self.biases)
 		
 		for i in range(len(self.network)): #layer
 			if i == len(self.network)-1: #when calculating outputs
@@ -160,7 +191,6 @@ class NeuralNetwork():
 
 
 	def backpropagation(self,expectedValues):
-
 		error = self.MLTools.squaredError(self.network[-1],expectedValues) 
 		#errorVector = [] #Vector containing the dError/dOut values 
 		#outVector = [] #Vector containing the dOut/dNet values
@@ -215,24 +245,19 @@ class NeuralNetwork():
 		else:
 			return errors,output
 
-
-
-
-
-				
-
-
-				
-							
-
-
-
-
-
-
+def createAdd(lower,upper,size):
+	inputs = []
+	outputs = []
+	for i in range(size):
+		n1 = random.randint(lower,upper)
+		n2 = random.randint(lower,upper)
+		inputs.append([lower+n1,upper-n2])
+		outputs.append((lower+n1)+(upper-n2))
+	return inputs,outputs
+	
 # networkSizes = [2,2,2] #The vector containing the sizes of the layers  
-# network = createMatrix(networkSizes)
-# network[0] = [.05,.10] #initialize the input layer
+# #network = createMatrix(networkSizes)
+# inputs = [.05,.10] #initialize the input layer
 
 # weights = []
 # weights.append([[.15,.25],[.20,.30]])
@@ -246,41 +271,42 @@ class NeuralNetwork():
 # biases.append([.60,.60])
 # #biases = np.matrix(biases)
 
-# #print(network,"\n\n",weights,"\n\n",biases)
+# targets = [.01,.99]
+# squashFunction = "relu"  #a string with the name of the squash function
+# learningRate = .5
+# #Initialize Netword
+# network = NeuralNetwork(networkSizes,squashFunction,learningRate,weights=weights,biases=biases)
+# for i in range(10000): #num epochs
+# 	network.train(inputs,targets)
+# print(network.feedForward(inputs))
 
-# squashFunction = "sigmoid"  #a string with the name of the squash function
-# network = forwardPass(network,weights,biases,squashFunction)
-# print(network)
-# error = MLTools.squaredError(network[-1],[.01,.99]) 
-# print(weights)
 
-# backpropagation(network,weights,error,[.01,.99],squashFunction)
+#XOR
+networkSizes = [2,2,1] #The vector containing the sizes of the layers
+inputs = [[0,0],[0,1],[1,0],[1,1]]
+targets = [0,1,1,0]
+squashFunction = "sigmoid"
+learningRate = 1
+network = NeuralNetwork(networkSizes,squashFunction,learningRate)
+for i in range(40000): #num epochs
+	for j in range(len(inputs)):
+		network.train(inputs[j],[targets[j]])
+for i in range(len(inputs)):
+	print(network.feedForward(inputs[i]))
 
 
-networkSizes = [2,2,2] #The vector containing the sizes of the layers  
-#network = createMatrix(networkSizes)
-inputs = [.05,.10] #initialize the input layer
-
-weights = []
-weights.append([[.15,.25],[.20,.30]])
-weights.append([[.40,.50],[.45,.55]])
-weights.append([[1],[1]])#no weights
-#weights = np.matrix(weights)
-
-biases = []
-biases.append([0,0])
-biases.append([.35,.35])
-biases.append([.60,.60])
-#biases = np.matrix(biases)
-
-targets = [.01,.99]
-squashFunction = "sigmoid"  #a string with the name of the squash function
-learningRate = .5
-
-#Initialize Netword
-network = NeuralNetwork(networkSizes,weights,squashFunction,learningRate,biases)
-for i in range(10000): #num epochs
-	network.train(inputs,targets)
-print(network.feedForward(inputs))
+# #addition: doesnt work
+# networkSizes = [2,2,1] #The vector containing the sizes of the layers
+# inputs,targets = createAdd(0,50,10)
+# print(targets)
+# validation_inputs,validation_targets = createAdd(50,100,10)
+# squashFunction = "relu"
+# learningRate = 1
+# network = NeuralNetwork(networkSizes,squashFunction,learningRate)
+# for i in range(100000): #num epochs
+# 	for j in range(len(inputs)):
+# 		network.train(inputs[j],[targets[j]])
+# for i in range(len(validation_inputs)):
+# 	print(network.feedForward(validation_inputs[i])," | ",validation_targets[i])
 
 
