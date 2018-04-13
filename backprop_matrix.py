@@ -3,6 +3,7 @@ import math
 import numpy as np
 from copy import copy, deepcopy
 import random
+import matplotlib.pyplot as plt
 
 
 class NeuralNetwork():
@@ -10,6 +11,7 @@ class NeuralNetwork():
 	def __init__(self,sizes,squashFunction,learningRate,weights=None,biases=None):
 		self.network = self.createMatrix(sizes)
 		self.squashFunction = squashFunction
+		self.errorList = []
 		if(weights == None):
 			self.weights = self.createMatrix(sizes)
 			self.randomizeWeights()
@@ -128,7 +130,7 @@ class NeuralNetwork():
 		derivatives = {"sigmoid":sigmoidDerivative,"relu":reluDerivative}
 
 		#initial learning rate
-		learningRate = .5
+		#learningRate = .5
 
 
 
@@ -185,13 +187,14 @@ class NeuralNetwork():
 				for k in range(len(self.network[i+1])): #neurons in next layer
 					self.network[i+1][k] += (self.network[i][j])*(self.weights[i][j][k]) #add the value from layer times the weight
 			for m in range(len(self.network[i+1])):
-				self.network[i+1][m] = self.MLTools.squash[self.squashFunction](self.network[i+1][m]) 
+				self.network[i+1][m] = self.MLTools.squash[self.squashFunction](self.network[i+1][m])
+			
 
 		return self.network[-1] #output
 
 
 	def backpropagation(self,expectedValues):
-		error = self.MLTools.squaredError(self.network[-1],expectedValues) 
+		error = self.MLTools.squaredError(self.network[-1],expectedValues)
 		#errorVector = [] #Vector containing the dError/dOut values 
 		#outVector = [] #Vector containing the dOut/dNet values
 		originalWeights = deepcopy(self.weights) #deepcopy prevents the references from being copied rather than values
@@ -236,8 +239,11 @@ class NeuralNetwork():
 		return error
 
 	def train(self,inputs,expected,showErrors=False,showOutput=False):
+		#print(self.weights)
 		output = self.feedForward(inputs)
+		#print("output",output)
 		errors = self.backpropagation(expected)
+		self.errorList.append(errors)
 		if(showErrors and not showOutput):
 			return errors
 		elif(showOutput and not showErrors):
@@ -272,13 +278,17 @@ def createAdd(lower,upper,size):
 # #biases = np.matrix(biases)
 
 # targets = [.01,.99]
-# squashFunction = "relu"  #a string with the name of the squash function
+# squashFunction = "sigmoid"  #a string with the name of the squash function
 # learningRate = .5
 # #Initialize Netword
 # network = NeuralNetwork(networkSizes,squashFunction,learningRate,weights=weights,biases=biases)
+# # network.train(inputs,targets)
+# # print(network.network)
 # for i in range(10000): #num epochs
 # 	network.train(inputs,targets)
-# print(network.feedForward(inputs))
+# 	#print(network.weights,"\n","-"*10)
+# print(network.feedForward(inputs),"\n","-"*10)
+
 
 
 #XOR
@@ -286,13 +296,17 @@ networkSizes = [2,2,1] #The vector containing the sizes of the layers
 inputs = [[0,0],[0,1],[1,0],[1,1]]
 targets = [0,1,1,0]
 squashFunction = "sigmoid"
-learningRate = 1
+learningRate = .1
 network = NeuralNetwork(networkSizes,squashFunction,learningRate)
-for i in range(20000): #num epochs
+for i in range(50000): #num epochs
 	for j in range(len(inputs)):
 		network.train(inputs[j],[targets[j]])
 for i in range(len(inputs)):
 	print(network.feedForward(inputs[i]))
+print(network.weights)
+
+#plt.plot(network.errorList)
+#plt.show()
 
 
 # #addition: doesnt work
